@@ -6,13 +6,17 @@ warnings off
 : n>c  48 + ;
 : c>n  48 - ;
 
-: cc>n  dup c@ c>n 10 *  swap 1+ c@ c>n + ;
+: cc>n  ( a -- n )
+  dup c@ c>n 10 *
+  swap 1+ c@ c>n + ;
 
-: nn>s
-  >r dup 10 < if '0' r@ c! else 10 /mod n>c r@ c! then
-  n>c r@ 1+ c!  r> 2 ;
+: nn>s  ( n a -- a 2 )
+  >r dup 10 <
+  if    '0' r@ c!
+  else  10 /mod n>c r@ c!
+  then  n>c r@ 1+ c!  r> 2 ;
 
-: date>s
+: date>s  ( n -- a 8 )
   100 /mod swap here 6 + nn>s drop drop
   100 /mod swap here 4 + nn>s drop drop
   100 /mod swap here 2 + nn>s drop drop
@@ -37,11 +41,11 @@ create   line  Lmax allot
 variable #line
 variable lastpos  \ position of start last line
 
-: dat  s" times.dat" r/w ;
+: dat  s" TIMESFILE" getenv r/w ;
 
 : new
   dat create-file
-  if ." failed to create data file" drop bye then ;
+  if ." failed to create data file" cr drop bye then ;
 
 : fileid!  dat open-file if drop new then fileid ! ;
 : file   fileid @ ;
@@ -70,7 +74,7 @@ variable lastpos  \ position of start last line
 ( Record storing )
 : sp!    bl here c!  here 1 file! ;
 : date!  day date>s file! sp! ;
-: mh!    here nn>s file! here nn>s file! sp! ;
+: mh!    here nn>s file!  here nn>s file! sp! ;
 
 
 ( Commands )
