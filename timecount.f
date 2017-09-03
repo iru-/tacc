@@ -35,11 +35,11 @@ warnings off
 
 
 ( File )
-32 constant Lmax
+256 constant Lmax
 variable fileid
 create   line  Lmax allot
 variable #line
-variable lastpos  \ position of start last line
+variable line#
 
 : dat  s" TIMESFILE" getenv r/w ;
 
@@ -50,59 +50,76 @@ variable lastpos  \ position of start last line
 : fileid!  dat open-file if drop new then fileid ! ;
 : file   fileid @ ;
 
+: >file  ( a n -- )  file write-file throw ;
+
+: 0line  line Lmax erase ;
+
 : line!
   line Lmax file read-line throw drop
   dup if dup #line ! then ;
 
-: file!  ( a n -- )
-  file write-file throw
+: line>s  ( -- a n )  line #line @ ;
+
+: .line  line>s type ;
+
+: cur  ( -- a )  line line# @ + ;
+
+: >line  ( a n -- )
+  >r  cur r@ move
+  r> line# +!  line# @ #line ! ;
+
+: c>line  ( c -- )  here c!  here 1 >line ;
+
+variable commitoff
+: commit
+  commitoff @ s>d file reposition-file throw
+  line>s  >file
+  10 here c!  here 1 >file
   file flush-file throw ;
 
-: position file file-position throw d>s ;
+: position  file file-position throw d>s ;
 
 ( Record fetching )
 4 constant DTLEN
 
-: date@
-  0 8 0 do line i + c@ c>n + 10 * loop 10 / ; 
+: date@  ( -- n )
+  0 8 0 do line i + c@ c>n + 10 * loop 10 / ;
 
-: dt   1- DTLEN 1+ * 9 + ;
-: dt@  line +  dup cc>n >r  2 + cc>n r> ;
-: dt?  dt #line @ DTLEN - < ;
-: lastdt  1 begin dup dt? while 1+ repeat 1- dt ;
+: mh@  ( a -- n n )
+  dup cc>n >r  2 + cc>n r> ;
+
+: status  ( n -- a )  1- 5 * 8 +  line + ;
+: status?  status line>s DTLEN - +  < ;
+: laststatus  1 begin dup status? while 1+ repeat 1- status ;
+
 
 ( Record storing )
-: sp!    bl here c!  here 1 file! ;
-: date!  day date>s file! sp! ;
-: mh!    here nn>s file!  here nn>s file! sp! ;
-
+: sp!    bl c>line ;
+: date!  day date>s >line ;
+: mh!    here nn>s >line  here nn>s >line ;
 
 ( Commands )
-: total
-  drop 0 >r
-  1 begin dup dt? while
-    dup dup dt dt@ mh>m . cr
-    1+
-  repeat rdrop ;
 
-: open  ( n -- )  m>mh mh! ;
+: open  ( n -- )  '+' c>line  m>mh mh! ;
 
-: close ( n -- )
-  lastdt dup >r  dt@ mh>m - m>mh
-  lastpos @ r> + s>d file reposition-file throw
-  mh! ;
+: close  ( n -- )
+  laststatus dup >r 1+  mh@ mh>m - m>mh
+  r> line - line# !  sp! mh! ;
 
 ( Initialization )
 
 : today?  date@ day = ;
+: init?   today? 0= ;
 
-: read   begin position line! while lastpos ! repeat drop ;
-: init?  read today? 0= ;
+: read
+  begin  position line!
+  while  commitoff !
+  repeat drop ;
+
 
 : setup
-  line Lmax erase
-  fileid!
-  init? if date! then ;
+  0line fileid! read
+  init? if date! position commitoff ! then ;
 
 : usage  ." usage: " sourcefilename type ."  command " cr bye ;
 
@@ -112,4 +129,4 @@ variable lastpos  \ position of start last line
   if now swap execute
   else ." command error: " type cr then ;
 
-setup run bye
+setup \ run bye
