@@ -92,6 +92,8 @@ variable commitoff
 : status?  status line>s DTLEN - +  < ;
 : laststatus  1 begin dup status? while 1+ repeat 1- status ;
 
+: dt  ( n -- a )  status 1+ ;
+: dt>m  ( n -- m )  dt mh@ mh>m ;
 
 ( Record storing )
 : sp!    bl c>line ;
@@ -99,12 +101,19 @@ variable commitoff
 : mh!    here nn>s >line  here nn>s >line ;
 
 ( Commands )
-
 : open  ( n -- )  '+' c>line  m>mh mh! ;
 
 : close  ( n -- )
   laststatus dup >r 1+  mh@ mh>m - m>mh
   r> line - line# !  sp! mh! ;
+
+: opendt?  ( n -- f )  status c@ '+' = ;
+
+: #  ( -- n )
+  0 >r 1
+  begin  dup status?
+  while  dup dt>m  over opendt? if now swap - then r> + >r 1+
+  repeat drop r> m>mh . . ;
 
 ( Initialization )
 
