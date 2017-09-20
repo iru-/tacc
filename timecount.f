@@ -127,8 +127,10 @@ variable commitoff
 
 
 : setup
-  0line fileid! read
-  init? if date! position commitoff ! then ;
+  0line fileid! read init?
+  if date! position commitoff !
+  else #line @ line# !
+  then ;
 
 : usage  ." usage: " sourcefilename type ."  command " cr bye ;
 
