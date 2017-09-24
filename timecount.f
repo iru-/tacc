@@ -90,7 +90,6 @@ variable commitoff
 
 : status  ( n -- a )  1- 5 * 8 +  line + ;
 : status?  status line>s DTLEN - +  < ;
-: laststatus  1 begin dup status? while 1+ repeat 1- status ;
 
 : dt  ( n -- a )  status 1+ ;
 : dt>m  ( n -- m )  dt mh@ mh>m ;
@@ -104,8 +103,8 @@ variable commitoff
 : open  ( n -- )  '+' c>line  m>mh mh! ;
 
 : close  ( n -- )
-  laststatus dup >r 1+  mh@ mh>m - m>mh
-  r> line - line# !  sp! mh! ;
+  -5 line# +!  sp!
+  cur mh@  mh>m - m>mh  mh! ;
 
 : opendt?  ( n -- f )  status c@ '+' = ;
 
