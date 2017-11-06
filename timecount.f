@@ -100,11 +100,11 @@ variable commitoff
 : mh!    here nn>s >line  here nn>s >line ;
 
 ( Commands )
-: open  ( n -- )  '+' c>line  m>mh mh! ;
+: open  ( n -- )  '+' c>line  m>mh mh! .line ;
 
 : close  ( n -- )
   -5 line# +!  sp!
-  cur mh@  mh>m - m>mh  mh! ;
+  cur mh@  mh>m - m>mh  mh! .line ;
 
 : opendt?  ( n -- f )  status c@ '+' = ;
 
