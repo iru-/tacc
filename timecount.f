@@ -129,19 +129,10 @@ variable commitoff
   while  commitoff a! !
   repeat drop ;
 
-
 : setup
   0line fileid! read init?
   if date! position commitoff a! !
   else #line a! @ line# a! !
   then ;
 
-: usage  ." usage: " sourcefilename type ."  command " cr bye ;
-
-: run
-  argc a! @ 2 < if usage then
-  next-arg sfind
-  if now swap execute
-  else ." command error: " type cr then ;
-
-setup \ run bye
+setup
