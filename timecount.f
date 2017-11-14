@@ -105,9 +105,18 @@ variable commitoff
   here nn>s here 2 >line ;
 
 ( Commands )
-: open  ( n -- )  '+' c>line  m>mh mh! .line ;
+: >number  ( a -- n )
+  push 0. pop count >number drop drop d>s ;
+
+: get-time  ( -- m )
+  ':' word >number  bl word >number
+  dup if swap mh>m exit then drop drop now ;
+
+: open  ( n -- )
+  get-time '+' c>line  m>mh mh! .line ;
 
 : close  ( n -- )
+  get-time
   line# a! -5 +!  sp!
   cur mh@  mh>m - m>mh  mh! .line ;
 
