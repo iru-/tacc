@@ -1,26 +1,26 @@
 #! /usr/bin/env gforth
 
 warnings off
+include cf.f
 
 ( Number-string convertion )
 : n>c  48 + ;
 : c>n  48 - ;
 
 : cc>n  ( a -- n )
-  dup c@ c>n 10 *
-  swap 1+ c@ c>n + ;
+  a! c@+ c>n 10 *  c@ c>n + ;
 
-: nn>s  ( n a -- a 2 )
-  >r dup 10 <
-  if    '0' r@ c!
-  else  10 /mod n>c r@ c!
-  then  n>c r@ 1+ c!  r> 2 ;
+: nn>s  ( n a -- )
+  a! dup 10 <
+  if    '0' c!+
+  else  10 /mod n>c c!+
+  then  n>c c! ;
 
-: date>s  ( n -- a 8 )
-  100 /mod swap here 6 + nn>s drop drop
-  100 /mod swap here 4 + nn>s drop drop
-  100 /mod swap here 2 + nn>s drop drop
-  here nn>s drop 8 ;
+: date>s  ( n -- )
+  100 /mod swap here 6 + nn>s
+  100 /mod swap here 4 + nn>s
+  100 /mod swap here 2 + nn>s
+  here nn>s ;
 
 
 ( Time )
@@ -47,8 +47,8 @@ variable line#
   dat create-file
   if ." failed to create data file" cr drop bye then ;
 
-: fileid!  dat open-file if drop new then fileid ! ;
-: file   fileid @ ;
+: fileid!  dat open-file if drop new then fileid a! ! ;
+: file   fileid a! @ ;
 
 : >file  ( a n -- )  file write-file throw ;
 
@@ -56,25 +56,26 @@ variable line#
 
 : line!
   line Lmax file read-line throw drop
-  dup if dup #line ! then ;
+  dup if dup #line a! ! then ;
 
-: line>s  ( -- a n )  line #line @ ;
+: line>s  ( -- a n )  line #line a! @ ;
 
 : .line  line>s type ;
 
-: cur  ( -- a )  line line# @ + ;
+: cur  ( -- a )  line line# a! @ + ;
 
 : >line  ( a n -- )
-  >r  cur r@ move
-  r> line# +!  line# @ #line ! ;
+  push cur r@ move
+  pop line# a! +!
+  @ #line a! ! ;
 
-: c>line  ( c -- )  here c!  here 1 >line ;
+: c>line  ( c -- )  here a! c!  here 1 >line ;
 
 variable commitoff
 : commit
-  commitoff @ s>d file reposition-file throw
+  commitoff a! @ s>d file reposition-file throw
   line>s  >file
-  10 here c!  here 1 >file
+  10 here a! c!  here 1 >file
   file flush-file throw ;
 
 : position  file file-position throw d>s ;
@@ -83,7 +84,9 @@ variable commitoff
 4 constant DTLEN
 
 : date@  ( -- n )
-  0 8 0 do line i + c@ c>n + 10 * loop 10 / ;
+  line a! 0 7
+  for  c@+ c>n + 10 *
+  next 10 / ;
 
 : mh@  ( a -- n n )
   dup cc>n >r  2 + cc>n r> ;
@@ -96,17 +99,19 @@ variable commitoff
 
 ( Record storing )
 : sp!    bl c>line ;
-: date!  day date>s >line ;
-: mh!    here nn>s >line  here nn>s >line ;
+: date!  day date>s  here 8 >line ;
+: mh!
+  here nn>s here 2 >line
+  here nn>s here 2 >line ;
 
 ( Commands )
 : open  ( n -- )  '+' c>line  m>mh mh! .line ;
 
 : close  ( n -- )
-  -5 line# +!  sp!
+  line# a! -5 +!  sp!
   cur mh@  mh>m - m>mh  mh! .line ;
 
-: opendt?  ( n -- f )  status c@ '+' = ;
+: opendt?  ( n -- f )  status a! c@ '+' = ;
 
 : #  ( -- n )
   0 >r 1
@@ -121,20 +126,20 @@ variable commitoff
 
 : read
   begin  position line!
-  while  commitoff !
+  while  commitoff a! !
   repeat drop ;
 
 
 : setup
   0line fileid! read init?
-  if date! position commitoff !
-  else #line @ line# !
+  if date! position commitoff a! !
+  else #line a! @ line# a! !
   then ;
 
 : usage  ." usage: " sourcefilename type ."  command " cr bye ;
 
 : run
-  argc @ 2 < if usage then
+  argc a! @ 2 < if usage then
   next-arg sfind
   if now swap execute
   else ." command error: " type cr then ;
