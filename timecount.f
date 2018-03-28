@@ -1,9 +1,9 @@
-#! /usr/bin/env gforth
+#! /usr/bin/env sf
 
-warnings off
-include cf.f
+include /Users/iru/src/4utils/cf.f
+include /Users/iru/src/4utils/unix.f
 
-( Number-string convertion )
+( Number-string conversion )
 : n>c  48 + ;
 : c>n  48 - ;
 
@@ -12,8 +12,8 @@ include cf.f
 
 : nn>s  ( n a -- )
   a! dup 10 <
-  if    '0' c!+
-  else  10 /mod n>c c!+
+  if    drop [char] 0 c!+
+  else  drop 10 /mod n>c c!+
   then  n>c c! ;
 
 : date>s  ( n -- )
@@ -24,14 +24,13 @@ include cf.f
 
 
 ( Time )
-: day     time&date 100 * +  100 * + >r  drop drop drop  r> ;
-: hour    time&date drop drop drop >r drop drop r> ;
-: minute  time&date drop drop drop drop nip ;
+: day     ( -- n )  time&date 100 * +  100 * + >r  drop drop drop  r> ;
+: hour    ( -- n )  time&date drop drop drop >r drop drop r> ;
+: minute  ( -- n )  time&date drop drop drop drop nip ;
+: now     ( -- n )  hour 60 *  minute + ;
 
-: now  hour 60 * minute + ;
-
-: mh>m  60 * + ;
-: m>mh  60 /mod ;
+: mh>m    ( m h -- m )  60 * + ;
+: m>mh    ( m -- m h )  60 /mod ;
 
 
 ( File )
@@ -47,16 +46,16 @@ variable line#
   dat create-file
   if ." failed to create data file" cr drop bye then ;
 
-: fileid!  dat open-file if drop new then fileid a! ! ;
+: fileid!  dat open-file if nip new swap then drop fileid a! ! ;
 : file   fileid a! @ ;
 
 : >file  ( a n -- )  file write-file throw ;
 
 : 0line  line Lmax erase ;
 
-: line!
+: line!  ( -- n )
   line Lmax file read-line throw drop
-  dup if dup #line a! ! then ;
+  if dup #line a! ! then  nip ;
 
 : line>s  ( -- a n )  line #line a! @ ;
 
@@ -78,15 +77,15 @@ variable commitoff
   10 here a! c!  here 1 >file
   file flush-file throw ;
 
-: position  file file-position throw d>s ;
+: position  ( -- n )  file-position throw d>s ;
 
 ( Record fetching )
 4 constant DTLEN
 
 : date@  ( -- n )
-  line a! 0 7
-  for  c@+ c>n + 10 *
-  next 10 / ;
+  line a!
+  0 8 for  c@+ c>n + 10 *  next
+  10 / ;
 
 : mh@  ( a -- n n )
   dup cc>n >r  2 + cc>n r> ;
@@ -109,18 +108,19 @@ variable commitoff
   push 0. pop count >number drop drop d>s ;
 
 : get-time  ( -- m )
-  ':' word >number  bl word >number
-  dup if swap mh>m exit then drop drop now ;
+  [char] : word count 2 < abort" Invalid hours" cc>n
+  bl word count 2 < abort" Invalid minutes" cc>n
+  swap mh>m ;
 
 : open  ( n -- )
-  get-time '+' c>line  m>mh mh! .line ;
+  get-time [char] + c>line  m>mh mh! .line ;
 
 : close  ( n -- )
   get-time
   line# a! -5 +!  sp!
   cur mh@  mh>m - m>mh  mh! .line ;
 
-: opendt?  ( n -- f )  status a! c@ '+' = ;
+: opendt?  ( n -- f )  status a! c@ [char] + = ;
 
 : #  ( -- n )
   0 >r 1
@@ -134,14 +134,16 @@ variable commitoff
 : init?   today? 0= ;
 
 : read
-  begin  position line!
-  while  commitoff a! !
+  begin
+    file position line! dup
+  while
+    commitoff a! !
   repeat drop ;
 
 : setup
   0line fileid! read init?
-  if date! position commitoff a! !
-  else #line a! @ line# a! !
+  if    drop date! file position commitoff a! !
+  else  drop #line a! @ line# a! !
   then ;
 
 setup
