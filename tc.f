@@ -1,135 +1,97 @@
-#!/usr/bin/env sf
+#! /usr/bin/gforth
 
-include /Users/iru/src/4utils/cf.f
-
-( File )
-0 value file
-
-: setup  ( a n -- )
-  r/w open-file throw  to file ;
-
-: read  ( a n -- n )
-  file read-line throw drop ;
-
-: write  ( a n -- )
-  file write-line throw ;
-
-: position@  ( -- n )
-  file file-position throw d>s ;
-
-: position!  ( n -- )
-  s>d file reposition-file throw ;
-
-: position-  ( n -- )
-  position@ swap -  position! ;
+warnings off
+require mf/mf.f
 
 ( Formatter )
 8 constant /date
 5 constant /frame
 
-: d>c    48 + ;
-: c>d    48 - ;
+: d>c  48 + ;
+: c>d  48 - ;
 
-: ten@  ( a -- n )
-  a!  c@+ c>d 10 *  c@+ c>d  + ;
+: ten@  ( a - n )  a!  c@+ c>d 10 *  c@+ c>d  + ;
+: ten!  ( n a - )  a!  10 /mod  d>c c!+  d>c c!+ ;
 
-: ten!  ( n a -- )
-  a!  10 /mod  d>c c!+  d>c c!+ ;
+: frame@  ( a - time status ) a! c@+ push  a ten@ 100 * a ten@ +  pop ;
+: frame!  ( time status a )   a! c!+ 100 /mod  a ten! a ten! ;
 
-: frame@  ( a -- time status )
-  a!  c@+ push
-  a ten@ 100 *  a ten@ +
-  pop ;
+: date@  ( a - n )   push 0. pop /date >number  drop drop d>s ;
+: date!  ( date a )  a!  3 for 100 /mod next  a ten! a ten! a ten! a ten! ;
 
-: frame!  ( time status a -- )
-  a!  c!+
-  100 /mod  a ten!  a ten! ;
+( Time )
+: time>min  ( time - n )  100 /mod  60 *  + ;
+: min>time  ( n - time )  60 /mod  100 *  + ;
 
-: date@  ( a -- n )
-  push 0. pop /date >number  drop drop d>s ;
+: timeop  ( t1 t2 op - t3 )
+  push  time>min swap time>min swap  pop execute  min>time ;
 
-: date!  ( date a -- )
-  a!  3 for 100 /mod next
-  a ten! a ten!  a ten!  a ten! ;
+: t-  ( t t' - t-t' )  ['] - timeop ;
+: t+  ( t t' - t+t' )  ['] + timeop ;
+
+: day     ( - date )  time&date 100 * +  100 * +  push drop drop drop pop ;
+: hour    ( - time )  time&date drop drop drop push drop drop pop 100 * ;
+: minute  ( - time )  time&date drop drop drop drop nip ;
+: now     ( - time )  hour minute + ;
+
+( File )
+0 value file
+
+: setup  ( a n )      r/w open-file throw  to file ;
+: read   ( a n - n )  file read-line throw drop ;
+: write  ( a n )      file write-line throw ;
+: position@  ( - n )  file file-position throw d>s ;
+: position!  ( n )    s>d file reposition-file throw ;
+: position-  ( n )    position@ swap -  position! ;
 
 ( Line )
 64 constant /line
 variable #line
-create 'line  /line allot
-variable commit-offset
+create line  /line allot
+variable offset
+
+: >line    ( a n )  push line pop move ;
+: >offset  ( n )    position@ swap 1+ - offset ! ;
+
+: line!  ( - n )  \ only overwrite line if something was read
+  here /line read dup 0= if exit then
+  dup #line !  here over >line  dup >offset ;
   
-: line!  ( -- n )  \ only overwrite 'line if something was read
-  here /line read if
-    dup #line !
-    dup push here 'line pop move
-    position@ over 1+ -  commit-offset !
-  then ;
-  
-: +#line  ( n -- )
-  #line +! ;
+: .line   line #line @ type ;
+: commit  offset @ position!  line #line @ write ;
+: ff      begin line! 0= until ;
 
-: .line  ( -- )
-  'line #line @ type ;
+: #frames  #line @  /date -  /frame / ;
+: .frames  begin line! while cr #frames . repeat ;
 
-: commit  ( -- )
-  commit-offset @ position!
-  'line #line @ write ;
+: 'frame  ( n - a )            /frame *  /date + line + ;
+: frame   ( n - time status )  'frame frame@ ;
+: last    ( - n )              #frames 1- ;
 
-: ff  ( -- )
-  begin line! while cr .line repeat ;
-
-: #frames  ( -- )
-  #line @  /date -  /frame / ;
-
-: .frames  ( -- )
-  begin line! while cr #frames . repeat ;
-
-: 'frame  ( n -- a )
-  /frame *  /date +  'line + ;
- 
-: frame  ( n -- time status )
-  'frame frame@ ;
-
-: last  ( -- index-of-last-frame )
-  #frames 1- ;
-
-( Time )
-: time>min  ( time -- n )  100 /mod  60 *  + ;
-: min>time  ( n -- time )  60 /mod  100 *  + ;
-  
-: t-  ( t t' -- t-t' )
-  time>min swap time>min swap  -  min>time ;
-
-: t+  ( t t' -- t+t' )
-  time>min swap time>min swap  + min>time ;
-
-: day     ( -- date )  time&date 100 * +  100 * +  push drop drop drop pop ;
-: hour    ( -- time )  time&date drop drop drop push drop drop pop 100 * ;
-: minute  ( -- time )  time&date drop drop drop drop nip ;
-: now     ( -- time )  hour minute + ;
-
+\ ------------------------------------------------------------------------------
 ( User commands )
 char + constant opentag
-bl     constant closetag
+    bl constant closetag
  
-: open?    ( status -- f )  opentag = ;
-: closed?  ( status -- f )  closetag = ;
+: open?    ( status - f )  opentag = ;
+: closed?  ( status - f )  closetag = ;
 
-: close  ( time -- )
-  last frame closed? if drop drop exit then drop
+: close  ( time )
+  last frame closed? if drop exit then
   t-  closetag  last 'frame frame!
   .line ;
 
-: open  ( time -- )
+: open  ( time )
   last frame open? abort" Frame open, close it first" drop
-  opentag  #frames 'frame frame!
-  /frame +#line
+  opentag  #frames 'frame frame!  /frame #line +!
   .line ;
 
-: #  ( -- time ) 
-  0  #frames 1- for 
-    r@ 1- frame drop t+
-  next
-  last frame closed? if drop t+ exit then drop
-  now swap t- + ;
+: #  ( - time )
+  0  #frames 1- for r@ 1- frame drop t+ next
+  last frame closed? if t+ exit then
+  now swap t- + . ;
 
+( Initialization )
+: use  bl word count setup ff ;
+
+use o.dat
