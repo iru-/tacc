@@ -51,12 +51,12 @@ create line  /line allot
 variable offset
 
 : >line    ( a n )  push line pop move ;
-: >offset  ( n )    position@ swap 1+ - offset ! ;
+: >offset  ( n )    position@ swap 1+ -  offset ! ;
 
 : line!  ( - n )  \ only overwrite line if something was read
   here /line read dup 0= if exit then
   dup #line !  here over >line  dup >offset ;
-  
+
 : .line   line #line @ type ;
 : commit  offset @ position!  line #line @ write ;
 : ff      begin line! 0= until ;
@@ -68,7 +68,6 @@ variable offset
 : frame   ( n - time status )  'frame frame@ ;
 : last    ( - n )              #frames 1- ;
 
-\ ------------------------------------------------------------------------------
 ( User commands )
 char + constant opentag
     bl constant closetag
@@ -77,6 +76,7 @@ char + constant opentag
 : closed?  ( status - f )  closetag = ;
 
 : close  ( time )
+  #frames 0= if exit then
   last frame closed? if drop exit then
   t-  closetag  last 'frame frame!
   .line ;
@@ -92,6 +92,12 @@ char + constant opentag
   now swap t- + . ;
 
 ( Initialization )
-: use  bl word count setup ff ;
+: 0line  line /line erase  0 #line ! ;
+
+: init
+  line date@ day = if exit then
+  0line  day line date!  /date #line +! ;
+
+: use  bl word count setup ff init ;
 
 use o.dat
