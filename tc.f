@@ -98,6 +98,6 @@ char + constant opentag
   line date@ day = if exit then
   0line  day line date!  /date #line +! ;
 
-: use  bl word count setup ff init ;
+: used  ( a n )  setup ff init ;
+: use            bl word count used ;
 
-use o.dat
