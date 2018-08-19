@@ -51,7 +51,7 @@ create line  /line allot
 variable offset
 
 : >line    ( a n )  push line pop move ;
-: >offset  ( n )    position@ swap 1+ -  offset ! ;
+: >offset  ( n )    position@ swap -  offset ! ;
 
 : line!  ( - n )  \ only overwrite line if something was read
   here /line read dup 0= if exit then
