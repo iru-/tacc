@@ -37,8 +37,11 @@ require mf/mf.f
 ( File )
 0 value file
 
-: setup  ( a n )
-  2dup r/w open-file if drop r/w create-file throw else 2drop then to file ;
+: open   ( a n - fd )
+  2dup r/w open-file 0= if nip nip exit then
+  drop r/w create-file throw ;
+
+: setup  ( a n )      open to file ;
 : read   ( a n - n )  file read-line throw drop ;
 : write  ( a n )      file write-line throw ;
 : position@  ( - n )  file file-position throw d>s ;
