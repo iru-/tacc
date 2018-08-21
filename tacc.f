@@ -103,5 +103,6 @@ char + constant opentag
   0line  day line date!  /date #line +! ;
 
 : used  ( a n )  setup ff init ;
-: use            bl word count used ;
-
+: use  bl word count used ;
+: go   s" TACCFILE" getenv dup 0= if 2drop exit then used ;
+go
