@@ -46,7 +46,6 @@ require mf/mf.f
 : write  ( a n )      file write-line throw ;
 : position@  ( - n )  file file-position throw d>s ;
 : position!  ( n )    s>d file reposition-file throw ;
-: position-  ( n )    position@ swap -  position! ;
 
 ( Line )
 64 constant /line
@@ -55,7 +54,7 @@ create line  /line allot
 variable offset
 
 : >line    ( a n )  push line pop move ;
-: >offset  ( n )    position@ swap -  offset ! ;
+: >offset  ( n )    1+ position@ swap -  offset ! ;
 
 : line!  ( - n )  \ only overwrite line if something was read
   here /line read dup 0= if exit then
