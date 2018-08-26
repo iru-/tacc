@@ -99,7 +99,7 @@ char + constant opentag
 
 : init
   line date@ day = if exit then
-  0line  day line date!  /date #line +! ;
+  0line  day line date!  /date #line +!  position@ offset !  ;
 
 : used  ( a n )  setup ff init ;
 : use  bl word count used ;
