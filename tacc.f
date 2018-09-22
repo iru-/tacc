@@ -20,7 +20,7 @@ require mf/mf.f
 : date!  ( date a )  a!  3 for 100 /mod next  a ten! a ten! a ten! a ten! ;
 
 ( Time )
-: time>min  ( time - n )  100 /mod  60 *  + ;
+: time>min  ( time - n )  100 /mod push  60 /mod  pop + 60 *  + ;
 : min>time  ( n - time )  60 /mod  100 *  + ;
 
 : timeop  ( t1 t2 op - t3 )
