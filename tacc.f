@@ -78,13 +78,13 @@ char + constant opentag
 : open?    ( status - f )  opentag = ;
 : closed?  ( status - f )  closetag = ;
 
-: close  ( time )
+: stop  ( time )
   #frames 0= if exit then
   last frame closed? if drop exit then
   t-  closetag  last 'frame frame!
   .line ;
 
-: open  ( time )
+: start  ( time )
   last frame open? abort" Frame open, close it first" drop
   opentag  #frames 'frame frame!  /frame #line +!
   .line ;
