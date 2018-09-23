@@ -94,6 +94,9 @@ char + constant opentag
   last frame closed? if t+ exit then
   now swap t- + . ;
 
+: +  t+ ;
+: -  t- ;
+
 ( Initialization )
 : 0line  line /line erase  0 #line ! ;
 
