@@ -91,7 +91,7 @@ char + constant opentag
 
 : #  ( - time )
   0  #frames 1- for r@ 1- frame drop t+ next
-  last frame closed? if t+ exit then
+  last frame closed? if t+ . exit then
   now swap t- + . ;
 
 : +  t+ ;
