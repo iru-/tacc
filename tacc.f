@@ -45,7 +45,7 @@ require mf/mf.f
   2dup r/w open-file 0= if nip nip exit then
   drop r/w create-file throw ;
 
-: setup  ( a n - )      open to file ;
+: setup  ( a n - )    open to file ;
 : read   ( a n - n )  file read-line throw drop ;
 : write  ( a n - )    file write-line throw ;
 : position@  ( - n )  file file-position throw d>s ;
@@ -53,19 +53,21 @@ require mf/mf.f
 
 ( Line )
 64 constant /line
+create line /line allot
 variable #line
-create line  /line allot
+create orig-line /line allot
+variable #orig-line
 variable offset
 
-: >line    ( a n - )  push line pop move ;
+: orig>line  orig-line line #orig-line @ move  #orig-line @ #line ! ;
+: line>orig  line orig-line #line @ move  #line @ #orig-line ! ;
 : >offset  ( n - )  1+ position@ swap -  offset ! ;
 
 : line!  ( - n )  \ only overwrite line if something was read
-  here /line read dup 0= if exit then
-  dup #line !  here over >line  dup >offset ;
+  orig-line /line read dup 0= if exit then
+  dup #orig-line !  orig>line  dup >offset ;
 
 : .line   line #line @ type ;
-: commit  offset @ position!  line #line @ write ;
 : ff      begin line! 0= until ;
 
 : #frames  #line @  /date -  /frame / ;
@@ -92,6 +94,9 @@ char + constant opentag
   last frame open? abort" Frame open, close it first" drop
   opentag  #frames 'frame frame!  /frame #line +!
   .line ;
+
+: revert  orig>line ;
+: commit  offset @ position!  line #line @ write  line>orig ;
 
 : #  ( - time )
   0  #frames 1- for r@ 1- frame drop t+ next
