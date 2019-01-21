@@ -13,11 +13,15 @@ require mf/mf.f
 : ten@  ( a - n )  a!  c@+ c>d 10 *  c@+ c>d  + ;
 : ten!  ( n a - )  a!  10 /mod  d>c c!+  d>c c!+ ;
 
-: frame@  ( a - time status ) a! c@+ push  a ten@ 100 * a ten@ +  pop ;
-: frame!  ( time status a )   a! c!+ 100 /mod  a ten! a ten! ;
+: time@  ( a - n )  ten@ 100 *  a ten@ + ;
+: time!  ( n a - )  push 100 /mod pop ten!  a ten! ;
 
-: date@  ( a - n )   push 0. pop /date >number  drop drop d>s ;
-: date!  ( date a )  a!  3 for 100 /mod next  a ten! a ten! a ten! a ten! ;
+: frame@  ( a - time status )  a! c@+ push  a time@  pop ;
+: frame!  ( time status a - )  a! c!+  a time! ;
+
+: date@  ( a - n )     push 0. pop /date >number  drop drop d>s ;
+: date!  ( date a - )
+  a!  100 /mod 100 /mod 100 /mod a ten! a ten! a ten! a ten! ;
 
 ( Time )
 : time>min  ( time - n )  100 /mod push  60 /mod  pop + 60 *  + ;
@@ -41,11 +45,11 @@ require mf/mf.f
   2dup r/w open-file 0= if nip nip exit then
   drop r/w create-file throw ;
 
-: setup  ( a n )      open to file ;
+: setup  ( a n - )      open to file ;
 : read   ( a n - n )  file read-line throw drop ;
-: write  ( a n )      file write-line throw ;
+: write  ( a n - )    file write-line throw ;
 : position@  ( - n )  file file-position throw d>s ;
-: position!  ( n )    s>d file reposition-file throw ;
+: position!  ( n - )  s>d file reposition-file throw ;
 
 ( Line )
 64 constant /line
@@ -53,8 +57,8 @@ variable #line
 create line  /line allot
 variable offset
 
-: >line    ( a n )  push line pop move ;
-: >offset  ( n )    1+ position@ swap -  offset ! ;
+: >line    ( a n - )  push line pop move ;
+: >offset  ( n - )  1+ position@ swap -  offset ! ;
 
 : line!  ( - n )  \ only overwrite line if something was read
   here /line read dup 0= if exit then
@@ -78,13 +82,13 @@ char + constant opentag
 : open?    ( status - f )  opentag = ;
 : closed?  ( status - f )  closetag = ;
 
-: stop  ( time )
+: stop  ( time - )
   #frames 0= if exit then
   last frame closed? if drop exit then
   t-  closetag  last 'frame frame!
   .line ;
 
-: start  ( time )
+: start  ( time - )
   last frame open? abort" Frame open, close it first" drop
   opentag  #frames 'frame frame!  /frame #line +!
   .line ;
@@ -104,7 +108,7 @@ char + constant opentag
   line date@ day = if exit then
   0line  day line date!  /date #line +!  position@ offset !  ;
 
-: used  ( a n )  setup ff init ;
+: used  ( a n - )  setup ff init ;
 : use  bl word count used ;
 : go   s" TACCFILE" getenv dup 0= if 2drop exit then used ;
 go
