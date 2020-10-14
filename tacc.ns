@@ -121,7 +121,7 @@ char + value opentag
 : total ( -> u )   0  #frames 1 - for  r@ 1 - frame drop t+  next ;
 : # ( -> time )
    total  last frame closed? if  t+ . cr exit  then
-   now swap t-  + . cr ;
+   now swap t-  t+ . cr ;
 
 : +  t+ ;
 : -  t- ;
