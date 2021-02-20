@@ -57,12 +57,12 @@ $1A4 value -rw-r--r--
   -1 value file
    0 value SEEK_SET
 
-: open ( path -> fd )
-  dup str>mem r/w 0 open-file  dup 0 >= if nip exit then
-  drop dup str>mem -rw-r--r-- create-file dup 0 >= if  sysclose drop open exit then
-  drop drop " can't open nor create taccfile" ?abort ;
+: open ( path #path -> fd )
+  2dup r/w 0 open-file  dup 0 >= if nip nip exit then
+  drop 2dup -rw-r--r-- create-file dup 0 >= if  sysclose drop open exit then
+  nip nip " can't open nor create taccfile" ?abort ;
 
-: setup ( path -> )      open to file ;
+: setup ( path #path -> )      open to file ;
 : (read) ( a u -> u' )   file read-line  dup 0 < " failed to read line" ?abort ;
 : trim ( u a -> u' )     over 1 -  +  1@  10 = if 1 - then ;
 : read ( a u -> u' )     over push  (read)  pop trim ;
@@ -134,8 +134,7 @@ char + value opentag
    commit ;
 
 anon:
-   " TACCFILE" getenv  dup 0 = if  " TACCFILE?" println bye  then
-   here push  str>mem str,  pop setup ff init
-   term-loop
-; execute
+   " TACCFILE" getenv  dup 0 = if  drop " TACCFILE?" println bye  then
+   setup ff init term-loop
 
+; execute
