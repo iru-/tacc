@@ -118,7 +118,7 @@ ok revert
 20210227
 ```
 
-### #
+### `#`
 `#` outputs the total time spent today.
 
 ## References
