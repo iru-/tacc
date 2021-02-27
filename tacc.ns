@@ -149,5 +149,5 @@ char + value opentag
 anon:
    TACCFILE setup ff init
    interactive? if  term-loop bye  then
-   eval-args
+   eval-args commit
 ; execute
