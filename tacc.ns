@@ -128,28 +128,26 @@ char + value opentag
 : -  t- ;
 
 ( Initialization )
-0 value terminal?
-
 : init
    line date@ day = if exit then
    0 #line !  day line date!  /date #line +!  position@ offset !
    commit ;
 
 : usage
-   " usage: tacc [file]" println
-   " (or set the TACCFILE environment variable)" println
-   1 sysexit ;
+   " usage: tacc [commands]" println  1 sysexit ;
 
 : TACCFILE ( -> path #path )
-   #args 1 > if  next-arg  0 to terminal?  exit  then
-   " TACCFILE" getenv  dup if  1 to terminal?  exit  then
-   usage ;
+   " TACCFILE" getenv  dup if  exit  then
+   " TACCFILE environment variable not set" println
+   1 sysexit ;
+
+: interactive? ( -> bool )   #args 1 = ;
 
 : eval-args
    next-arg dup if  eval eval-args exit  then  2drop ;
 
 anon:
    TACCFILE setup ff init
-   terminal? if  term-loop bye  then
+   interactive? if  term-loop bye  then
    eval-args
 ; execute
