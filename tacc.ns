@@ -115,7 +115,7 @@ char + value opentag
    opentag  #frames 'frame frame!  /frame #line +!
    .line ;
 
-: revert   orig>line ;
+: revert   orig>line .line ;
 : commit   offset @ position!  line #line @ write  line>orig ;
 
 : total ( -> u )   0  #frames 1 - for  r@ 1 - frame drop t+  next ;
