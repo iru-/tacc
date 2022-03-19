@@ -2,7 +2,7 @@
 \ SPDX-License-Identifier: MIT
 \ Copyright (c) 2017-2021 Iruatã Martins dos Santos Souza
 
-fload time
+fload nop/time
 
 ( Formatter )
 8 value /date
@@ -63,10 +63,10 @@ $1A4 value -rw-r--r--
   nip nip " can't open nor create taccfile" ?abort ;
 
 : setup ( path #path -> )      open to file ;
-: (read) ( a u -> u' )   file read-line  dup 0 < " failed to read line" ?abort ;
+: (read) ( a u -> u' )   push file swap pop read-line  dup 0 < " failed to read line" ?abort ;
 : trim ( u a -> u' )     over 1 -  +  1@  10 = if 1 - then ;
 : read ( a u -> u' )     over push  (read)  pop trim ;
-: write ( a u -> )       file write-line  0 < " failed to write line" ?abort ;
+: write ( a u -> )       push file swap pop write-line  0 < " failed to write line" ?abort ;
 : position@ ( -> u )     file file-position ;
 : position! ( u -> )     SEEK_SET file sysseek  -1 = " failed to seek" ?abort ;
 
