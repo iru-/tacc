@@ -59,7 +59,7 @@ $1A4 value -rw-r--r--
 
 : open ( path #path -> fd )
   2dup r/w 0 open-file  dup 0 >= if nip nip exit then
-  drop 2dup -rw-r--r-- create-file dup 0 >= if  sysclose drop open exit then
+  drop 2dup -rw-r--r-- create-file dup 0 >= if  close drop open exit then
   nip nip " can't open nor create taccfile" ?abort ;
 
 : setup ( path #path -> )      open to file ;
@@ -68,7 +68,7 @@ $1A4 value -rw-r--r--
 : read ( a u -> u' )     over push  (read)  pop trim ;
 : write ( a u -> )       push file swap pop write-line  0 < " failed to write line" ?abort ;
 : position@ ( -> u )     file file-position ;
-: position! ( u -> )     SEEK_SET file sysseek  -1 = " failed to seek" ?abort ;
+: position! ( u -> )     SEEK_SET file lseek  -1 = " failed to seek" ?abort ;
 
 
 ( Line )
